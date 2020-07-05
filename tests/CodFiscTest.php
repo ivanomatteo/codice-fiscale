@@ -88,8 +88,8 @@ class CodFiscTest extends TestCase
     public function test_db()
     {
         $envfile = __DIR__ . '/../env.php';
-        if (true || !file_exists($envfile)) {
-
+        if (!file_exists($envfile)) {
+            $this->assertTrue(true);
             return;
         }
 
