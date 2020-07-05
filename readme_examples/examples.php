@@ -1,8 +1,8 @@
 <?php
+include __DIR__.'/../vendor/autoload.php';
+
 
 use IvanoMatteo\CodiceFiscale\CodiceFiscale;
-
-include __DIR__.'/../vendor/autoload.php';
 
 
 
