@@ -158,9 +158,13 @@ class CodiceFiscale
      */
     public function matchName($name)
     {
-        $nm = static::processName($name);
-        $nm2 = substr($this->codiceFiscale, 3, 3);
-        return $nm === $nm2;
+        try {
+            $nm = static::processName($name);
+            $nm2 = substr($this->codiceFiscale, 3, 3);
+            return $nm === $nm2;
+        } catch (CodicefiscaleException $ex) {
+            return false;
+        }
     }
 
     /**
@@ -168,9 +172,13 @@ class CodiceFiscale
      */
     public function matchFamilyName($familyName)
     {
-        $fn = static::processFamilyName($familyName);
-        $fn2 = substr($this->codiceFiscale, 0, 3);
-        return $fn === $fn2;
+        try {
+            $fn = static::processFamilyName($familyName);
+            $fn2 = substr($this->codiceFiscale, 0, 3);
+            return $fn === $fn2;
+        } catch (CodicefiscaleException $ex) {
+            return false;
+        }
     }
 
     /**
