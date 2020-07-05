@@ -1,4 +1,5 @@
 <?php
+
 namespace IvanoMatteo\CodiceFiscale;
 
 use DateTime;
@@ -78,19 +79,17 @@ class CodiceFiscale
         }
 
         return static::calculate(
-            $person->{isset($fieldMap->{'name'}) ? $fieldMap->{'name'} : 'name'},
-            $person->{isset($fieldMap->{'familyName'}) ? $fieldMap->{'familyName'} : 'familyName'},
-            $person->{isset($fieldMap->{'dateOfBirth'}) ? $fieldMap->{'dateOfBirth'} : 'dateOfBirth'},
-            $person->{isset($fieldMap->{'sex'}) ? $fieldMap->{'sex'} : 'sex'},
-            $person->{isset($fieldMap->{'cityCode'}) ? $fieldMap->{'cityCode'} : 'cityCode'}
+            $person->{isset($fieldMap->name) ? $fieldMap->name : 'name'},
+            $person->{isset($fieldMap->familyName) ? $fieldMap->familyName : 'familyName'},
+            $person->{isset($fieldMap->dateOfBirth) ? $fieldMap->dateOfBirth : 'dateOfBirth'},
+            $person->{isset($fieldMap->sex) ? $fieldMap->sex : 'sex'},
+            $person->{isset($fieldMap->cityCode) ? $fieldMap->cityCode : 'cityCode'}
         );
     }
 
 
-
-
     //#####################################################
-    // metodi
+    // methods
     //#####################################################
 
     /**
@@ -106,6 +105,237 @@ class CodiceFiscale
 
 
 
+    /**
+     * check if the fiscal code match the given fields
+     * @param object|array $person expected fields: name, familyName, dateOfBirth, sex, cityCode
+     * @param object|array $fieldMap if provided, allow to remap field names
+     * @param bool $partial validate only present fields
+     * @return bool
+     */
+    public function match($person, $fieldMap = null, $partial = false)
+    {
+        if (is_array($person)) {
+            $person = (object) $person;
+        }
+
+        if (is_array($fieldMap)) {
+            $fieldMap = (object) $fieldMap;
+        }
+
+        $f_name = isset($fieldMap->{'name'}) ? $fieldMap->{'name'} : 'name';
+        $f_familyName = isset($fieldMap->{'familyName'}) ? $fieldMap->{'familyName'} : 'familyName';
+        $f_dateOfBirth = isset($fieldMap->{'dateOfBirth'}) ? $fieldMap->{'dateOfBirth'} : 'dateOfBirth';
+        $f_sex = isset($fieldMap->{'sex'}) ? $fieldMap->{'sex'} : 'sex';
+        $f_cityCode = isset($fieldMap->{'cityCode'}) ? $fieldMap->{'cityCode'} : 'cityCode';
+
+        return (($partial && !property_exists($person, $f_name)) || $this->matchName($person->{$f_name})) &&
+            (($partial && !property_exists($person, $f_familyName)) || $this->matchFamilyName($person->{$f_familyName})) &&
+            (($partial && !property_exists($person, $f_dateOfBirth)) || $this->matchDateOfBirth($person->{$f_dateOfBirth})) &&
+            (($partial && !property_exists($person, $f_sex)) || $this->matchSex($person->{$f_sex})) &&
+            (($partial && !property_exists($person, $f_cityCode)) || $this->matchCityCode($person->{$f_cityCode}));
+    }
+
+    /**
+     * @return bool
+     */
+    public function matchName($name)
+    {
+        $nm = static::processName($name);
+        $nm2 = substr($this->codiceFiscale, 3, 3);
+        return $nm === $nm2;
+    }
+
+    /**
+     * @return bool
+     */
+    public function matchFamilyName($familyName)
+    {
+        $fn = static::processFamilyName($familyName);
+        $fn2 = substr($this->codiceFiscale, 0, 3);
+        return $fn === $fn2;
+    }
+
+    /**
+     * @param DateTime|string|int|object $dateOfBirth @see self::parseDate()
+     * @return bool
+     */
+    public function matchDateOfBirth($dateOfBirth)
+    {
+        $input = static::parseDate($dateOfBirth);
+        $d = $this->getDateOfBirthRaw();
+        $cf_date = $d->year . '-' . $d->month . '-' . $d->day;
+
+        return $input->format('y-m-d') === $cf_date;
+    }
+
+    /**
+     * @param string $sex 'M' or 'F'
+     * @return bool
+     */
+    public function matchSex($sex)
+    {
+        $s = strtoupper(trim($sex));
+        $s1 = $this->getSex();
+        return $s === $s1;
+    }
+
+    /**
+     * @param string $cityCode - the code of the city: "codice catastale" also known as "codice belfiore"
+     * @return bool
+     */
+    public function matchCityCode($cityCode)
+    {
+        $cc = strtoupper(trim($cityCode));
+        $cc2 = $this->getCityCode();
+
+        return $cc === $cc2;
+    }
+
+
+    /**
+     * @return string 'M' or 'F'
+     */
+    public function getSex()
+    {
+        if ($this->sex === NULL) {
+            $day = substr($this->getBaseVariation(), 9, 2);
+
+            if (intval($day) > 40) {
+                $this->sex = 'F';
+            } else {
+                $this->sex = 'M';
+            }
+        }
+
+        return $this->sex;
+    }
+
+
+    /**
+     * extract the date of birth, according to the century
+     * @param string|int $century the year  4 or 2 digits - the last 2 digits will be replaced with 00. if < 100 will be multiplied by 100
+     * @return DateTime
+     */
+    public function getDateOfBirth($century)
+    {
+        $century = static::century4digits($century);
+
+        $d = $this->getDateOfBirthRaw();
+        $mm = (int) $d->month;
+        $dd = (int) $d->day;
+        $yy = (int) $d->year;
+
+        return (new DateTime())->setDate($century + $yy, $mm, $dd);
+    }
+
+    /**
+     * extract raw date of birth
+     * @return object  {"day":"dd","month":"mm","year":"yy"}
+     */
+    public function getDateOfBirthRaw()
+    {
+        if ($this->dateOfBirth === NULL) {
+            $this->dateOfBirth = static::extractDateOfBirthRaw($this->codiceFiscale);
+        }
+        return $this->dateOfBirth;
+    }
+
+    /**
+     * @return string - the code of the city: "codice catastale" also known as "codice belfiore"
+     */
+    public function getCityCode()
+    {
+        $cc = substr($this->getBaseVariation(), 11, 4);
+        return $cc;
+    }
+
+
+    /**
+     * @return string the fiscal code without "omocodia" variations
+     */
+    public function getBaseVariation()
+    {
+        if (!$this->isOmocodia()) {
+            return $this->codiceFiscale;
+        }
+        if (!isset($this->codiceFiscaleBase)) {
+            $this->codiceFiscaleBase = static::calculateBaseVariation($this->codiceFiscale);
+        }
+        return $this->codiceFiscaleBase;
+    }
+
+    /**
+     * the variations are calculated using a binary number increment pattern:
+     * XXXXXX00X00X001X
+     * XXXXXX00X00X010X
+     * XXXXXX00X00X011X
+     * XXXXXX00X00X100X
+     * ......
+     * @param integer $num the index of variation,
+     * @return array if $num === null then: all 127 possible "omocodia" variations else: the requested variation
+     */
+    public function generateVariations($num = null)
+    {
+        if (isset($num)) {
+            if ($num < 1 || $num > 127) {
+                throw new CodicefiscaleException('variation ' . $num . ' do not exists');
+            }
+        }
+        $ind = array_reverse(static::$omocodieIndexes);
+        $map = array_flip(static::$omocodiaMap);
+
+        $res = [];
+        for ($i = (isset($num) ? $num : 1); $i < (isset($num) ? ($num + 1) : 128); $i++) {
+            $tmp = $this->getBaseVariation();
+            $pattern = strrev(decbin($i));
+            $len = strlen($pattern);
+
+            for ($j = 0; $j < $len; $j++) {
+                if ($pattern[$j]) {
+                    $tmp[$ind[$j]] = $map[$tmp[$ind[$j]]];
+                }
+            }
+            $tmp[15] = static::calcControlDigit($tmp);
+            $res[] = $tmp;
+        }
+
+        if (isset($num)) {
+            return $res[0];
+        }
+
+        return $res;
+    }
+
+    /**
+     * @param int $minAge
+     * @param DateTime|string|int|object $currDateTime @see self::parseDate()
+     *
+     * @return DateTime return the most probable date of birth,
+     * basing on the current date and the minimum age specified
+     */
+    public function getProbableDateOfBirth($minAge = null, $currDateTime = null)
+    {
+        $arr = $this->getDateOfBirthRaw();
+
+        $dd = (int) $arr->day;
+        $mm = (int) $arr->month;
+        $yy = (int) $arr->year;
+
+        return static::calculateProbableDateOfBirth($dd, $mm, $yy, $minAge, $currDateTime);
+    }
+
+
+    /** @return string */
+    public function __toString()
+    {
+        return $this->codiceFiscale;
+    }
+
+
+
+    //#####################################################
+    // static methods
+    //#####################################################
 
     /**
      * @param  string $cod the fiscal code - must be an uppercase string
@@ -197,134 +427,6 @@ class CodiceFiscale
 
 
     /**
-     * check if the fiscal code match the given fields
-     * @param object|array $person expected fields: name, familyName, dateOfBirth, sex, cityCode
-     * @param object|array $fieldMap if provided, allow to remap field names
-     * @return bool
-     */
-    public function match($person, $fieldMap = null)
-    {
-        if (is_array($person)) {
-            $person = (object) $person;
-        }
-
-        if (is_array($fieldMap)) {
-            $fieldMap = (object) $fieldMap;
-        }
-
-        return
-            $this->matchName($person->{isset($fieldMap->{'name'}) ? $fieldMap->{'name'} : 'name'}) &&
-            $this->matchFamilyName($person->{isset($fieldMap->{'familyName'}) ? $fieldMap->{'familyName'} : 'familyName'}) &&
-            $this->matchDateOfBirth($person->{isset($fieldMap->{'dateOfBirth'}) ? $fieldMap->{'dateOfBirth'} : 'dateOfBirth'}) &&
-            $this->matchSex($person->{isset($fieldMap->{'sex'}) ? $fieldMap->{'sex'} : 'sex'}) &&
-            $this->matchCityCode($person->{isset($fieldMap->{'cityCode'}) ? $fieldMap->{'cityCode'} : 'cityCode'});
-    }
-
-    /**
-     * @return bool
-     */
-    public function matchName($name)
-    {
-        $nm = static::processName($name);
-        $nm2 = substr($this->codiceFiscale, 3, 3);
-        return $nm === $nm2;
-    }
-
-    /**
-     * @return bool
-     */
-    public function matchFamilyName($familyName)
-    {
-        $fn = static::processFamilyName($familyName);
-        $fn2 = substr($this->codiceFiscale, 0, 3);
-        return $fn === $fn2;
-    }
-
-    /**
-     * @param DateTime|string|int|object $dateOfBirth @see self::parseDate()
-     * @return bool
-     */
-    public function matchDateOfBirth($dateOfBirth)
-    {
-        $input = static::parseDate($dateOfBirth);
-        $d = $this->getDateOfBirthRaw();
-        $cf_date = $d->year.'-'.$d->month.'-'.$d->day;
-
-        return $input->format('y-m-d') === $cf_date;
-    }
-
-    /**
-     * @param string $sex 'M' or 'F'
-     * @return bool
-     */
-    public function matchSex($sex)
-    {
-        $s = strtoupper(trim($sex));
-        $s1 = $this->getSex();
-        return $s === $s1;
-    }
-
-    /**
-     * @param string $cityCode - the code of the city: "codice catastale" also known as "codice belfiore"
-     * @return bool
-     */
-    public function matchCityCode($cityCode)
-    {
-        $cc = strtoupper(trim($cityCode));
-        $cc2 = $this->getCityCode();
-
-        return $cc === $cc2;
-    }
-
-
-    /**
-     * @return string 'M' or 'F'
-     */
-    public function getSex()
-    {
-        if ($this->sex === NULL) {
-            $day = substr($this->getBaseVariation(), 9, 2);
-
-            if (intval($day) > 40) {
-                $this->sex = 'F';
-            } else {
-                $this->sex = 'M';
-            }
-        }
-
-        return $this->sex;
-    }
-
-
-    /**
-     * extract the date of birth, according to the century
-     * @param string|int $century the year  4 or 2 digits - the last 2 digits will be replaced with 00. if < 100 will be multiplied by 100
-     * @return DateTime
-     */
-    public function getDateOfBirth($century)
-    {
-        $century = static::century4digits($century);
-
-        $d = $this->getDateOfBirthRaw();
-        $mm = (int) $d->month;
-        $dd = (int) $d->day;
-        $yy = (int) $d->year;
-
-        return (new DateTime())->setDate($century + $yy, $mm, $dd);
-    }
-
-    /**
-     * extract raw date of birth
-     * @return object  {"day":"dd","month":"mm","year":"yy"}
-     */
-    public function getDateOfBirthRaw()
-    {
-        if ($this->dateOfBirth === NULL) {
-            $this->dateOfBirth = static::extractDateOfBirthRaw($this->codiceFiscale);
-        }
-        return $this->dateOfBirth;
-    }
-    /**
      * @param  string $cod the fiscal code - must be an uppercase string
      * @return object  {"day":"dd","month":"mm","year":"yy"}
      */
@@ -348,30 +450,6 @@ class CodiceFiscale
         return (object) compact('year', 'month', 'day');
     }
 
-    /**
-     * @return string - the code of the city: "codice catastale" also known as "codice belfiore"
-     */
-    public function getCityCode()
-    {
-        $cc = substr($this->getBaseVariation(), 11, 4);
-        return $cc;
-    }
-
-
-    /**
-     * @return string the fiscal code without "omocodia" variations
-     */
-    public function getBaseVariation()
-    {
-        if (!$this->isOmocodia()) {
-            return $this->codiceFiscale;
-        }
-        if (!isset($this->codiceFiscaleBase)) {
-            $this->codiceFiscaleBase = static::calculateBaseVariation($this->codiceFiscale);
-        }
-        return $this->codiceFiscaleBase;
-    }
-
 
     /**
      * @param  string $cf the fiscal code - must be an uppercase string
@@ -388,73 +466,6 @@ class CodiceFiscale
         return $cf;
     }
 
-
-    /**
-     * the variations are calculated using a binary number increment pattern:
-     * XXXXXX00X00X001X
-     * XXXXXX00X00X010X
-     * XXXXXX00X00X011X
-     * XXXXXX00X00X100X
-     * ......
-     * @param integer $num the index of variation,
-     * @return array if $num === null then: all 127 possible "omocodia" variations else: the requested variation
-     */
-    public function generateVariations($num = null)
-    {
-        if (isset($num)) {
-            if ($num < 1 || $num > 127) {
-                throw new CodicefiscaleException('variation ' . $num . ' do not exists');
-            }
-        }
-        $ind = array_reverse(static::$omocodieIndexes);
-        $map = array_flip(static::$omocodiaMap);
-
-        $res = [];
-        for ($i = (isset($num) ? $num : 1); $i < (isset($num) ? ($num + 1) : 128); $i++) {
-            $tmp = $this->getBaseVariation();
-            $pattern = strrev(decbin($i));
-            $len = strlen($pattern);
-
-            for ($j = 0; $j < $len; $j++) {
-                if ($pattern[$j]) {
-                    $tmp[$ind[$j]] = $map[$tmp[$ind[$j]]];
-                }
-            }
-            $tmp[15] = static::calcControlDigit($tmp);
-            $res[] = $tmp;
-        }
-
-        if (isset($num)) {
-            return $res[0];
-        }
-
-        return $res;
-    }
-
-
-    /** @return string */
-    public function __toString()
-    {
-        return $this->codiceFiscale;
-    }
-
-    /**
-     * @param int $minAge
-     * @param DateTime|string|int|object $currDateTime @see self::parseDate()
-     *
-     * @return DateTime return the most probable date of birth,
-     * basing on the current date and the minimum age specified
-     */
-    public function getProbableDateOfBirth($minAge = null, $currDateTime = null)
-    {
-        $arr = $this->getDateOfBirthRaw();
-
-        $dd = (int) $arr->day;
-        $mm = (int) $arr->month;
-        $yy = (int) $arr->year;
-
-        return static::calculateProbableDateOfBirth($dd, $mm, $yy, $minAge, $currDateTime);
-    }
 
     /**
      * @param string $yy year 2 digits
@@ -754,5 +765,3 @@ class CodiceFiscale
  * static initializzation
  */
 CodiceFiscale::init();
-
-

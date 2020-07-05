@@ -28,15 +28,15 @@ class CodFiscTest extends TestCase
         $person = [
             'name' => $name,
             'familyName' => $familyName,
-            'dateOfBirth' => $dateOfBirth,
+            'date' => $dateOfBirth,
             'sex' => $sex,
             'cityCode' => $cityCode,
         ];
-        $mappa = [
-            'dateOfBirth' => 'dateOfBirth'
+        $fieldMap = [
+            'dateOfBirth' => 'date'
         ];
 
-        $cfx = CodiceFiscale::calculateObj($person, $mappa);
+        $cfx = CodiceFiscale::calculateObj($person, $fieldMap);
 
         $this->assertTrue($cf->__toString() === $cfx->__toString());
 
@@ -59,6 +59,11 @@ class CodFiscTest extends TestCase
             $this->assertTrue($c->matchSex($sex));
 
             $this->assertTrue($c->match((object) compact('name', 'familyName', 'dateOfBirth', 'cityCode', 'sex')));
+            $this->assertTrue($c->match($person,$fieldMap));
+
+            //partial validation
+            $this->assertTrue($c->match(compact('name',  'dateOfBirth', 'cityCode'),null,true));
+            $this->assertFalse($c->match(['name' => 'Mario', 'cityCode'=> 'Z000'],null,true));
 
 
             $this->assertTrue($c->getCityCode() === $cityCode);

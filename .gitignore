@@ -4,4 +4,5 @@ docs
 vendor
 coverage
 env.php
+env.php_
 /.idea
