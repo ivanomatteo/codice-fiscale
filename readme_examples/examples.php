@@ -8,35 +8,31 @@ use IvanoMatteo\CodiceFiscale\CodiceFiscale;
 
 try{
 
-    // solleva un'eccezione se il codice ficale ha un foramto errato
-    // o il carattere di controllo non corrisponde
-
-    $c = CodiceFiscale::parse("RSSMRAULRL1H50MM",1900); // verifica meglio se l'anno è bisestile fornendo il secolo
+    // will raise an exception if the format is not valid
+    $c = CodiceFiscale::parse("RSSMRAULRL1H50MM",1900); // passing the "century" arg, help to validate in case of leap years
     $c = CodiceFiscale::parse("RSSMRAULRL1H50MM");
 
     echo "\n"."matchName ".($c->matchName('Mario')? 'si' : 'no');
     echo "\n"."isOmocodia ".($c->isOmocodia()? 'si' : 'no');
 
-    // per estrarre la data in formato DateTime è necessario fornire il secolo di riferimento
+    // to extract the date of birth, the "century" argumenti is required
     echo "\n"."getDateOfBirth ".$c->getDateOfBirth(1900)->format('Y-m-d');
 
-    // { "anno":"aa", "mese":"mm", "giorno":"gg" }
+    // is possible to extract the raw date of birth:  { "year":"yy", "month":"mm", "day":"dd" }
     echo "\n"."getDateOfBirthObj ".json_encode($c->getDateOfBirthRaw());
 
-    // restituisce la data di nascita nel secolo passato più vicino
+    // the library can provide the nearest date of birth according to current date:
     echo "\n"."getProbableDateOfBirth ".$c->getProbableDateOfBirth()->format('Y-m-d');
-
-    // è possibile specificare l'erà minima e la data corrente di riferimento
-    echo "\n"."getProbableDateOfBirth_18 ".$c->getProbableDateOfBirth(18,'2019-01-01')->format('Y-m-d');
+    // also according to minimum age and current date arguments
+    echo "\n"."getProbableDateOfBirth 18 ".$c->getProbableDateOfBirth(18,'2019-01-01')->format('Y-m-d');
 
 }catch(\Exception $ex){
-  // se il formato, la data o il carattere di controllo non sono validi
   echo $ex->getMessage();
 }
 
 
 //
-// calcola a partire dai dati
+// calculate using person data 
 //
 $name = 'Mario';
 $familyName = 'Rossi';
@@ -47,25 +43,25 @@ $cityCode = 'H501';
 $cf = CodiceFiscale::calculate($name, $familyName, $dateOfBirth, $sex, $cityCode);
 
 //
-// calcola da oggetto o array
+// calcumate using an array (it accept an object as well)
 //
 $person = [
     'name' => $name,
     'familyName' => $familyName,
-    'dateOfBirth' => $dateOfBirth,
+    'date' => $dateOfBirth,
     'sex' => $sex,
     'cityCode' => $cityCode,
 ];
-$mappa = [  // rimappa i campi nel caso abbiano nomi diversi
-    'datanascita' => 'dateOfBirth'
+$map = [  // it possible to provide a map, to match fields with different names
+    'dateOfBirth' => 'date'
 ];
-$cfx = CodiceFiscale::calculateObj($person, $mappa);
+$cfx = CodiceFiscale::calculateObj($person, $map);
 
 
-// genera tutte le 127 variazioni omocodiche
+// generate all the 127 possible "omocodia" variations
 $variazioni = $cf->generateVariations();
 
-// genera la variazione n. 7,
+// generate variation n. 7 only
 $variazioni = $cf->generateVariations(7);
 
 
