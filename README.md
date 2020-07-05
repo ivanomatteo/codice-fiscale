@@ -6,7 +6,7 @@
 Calculation and data extraction on italian fiscal code (codice fiscale), with "omocodie". 
 
 
-It also support diacritical character esapnsion (caratteri diacritici)
+It also support diacritical character expansion (caratteri diacritici)
 for example:
 
 'Ä' => 'AE',  'ß' => 'SS'
