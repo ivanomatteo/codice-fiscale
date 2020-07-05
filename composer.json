@@ -1,5 +1,5 @@
 {
-    "name": "ivanomatteo/codicefiscale",
+    "name": "ivanomatteo/codice-fiscale",
     "description": "Calculation and data extraction on italian fiscal code (codice fiscale), with \"omocodie\" and diacritical character esapnsion (caratteri diacritici)",
     "keywords": [
         "ivanomatteo",
@@ -7,7 +7,7 @@
         "omocodia",
         "diacritici"
     ],
-    "homepage": "https://github.com/ivanomatteo/codicefiscale",
+    "homepage": "https://github.com/ivanomatteo/codice-fiscale",
     "license": "MIT",
     "type": "library",
     "authors": [
