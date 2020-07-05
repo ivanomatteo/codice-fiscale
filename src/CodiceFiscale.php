@@ -122,11 +122,11 @@ class CodiceFiscale
             $fieldMap = (object) $fieldMap;
         }
 
-        $f_name = isset($fieldMap->{'name'}) ? $fieldMap->{'name'} : 'name';
-        $f_familyName = isset($fieldMap->{'familyName'}) ? $fieldMap->{'familyName'} : 'familyName';
-        $f_dateOfBirth = isset($fieldMap->{'dateOfBirth'}) ? $fieldMap->{'dateOfBirth'} : 'dateOfBirth';
-        $f_sex = isset($fieldMap->{'sex'}) ? $fieldMap->{'sex'} : 'sex';
-        $f_cityCode = isset($fieldMap->{'cityCode'}) ? $fieldMap->{'cityCode'} : 'cityCode';
+        $f_name = isset($fieldMap->name) ? $fieldMap->name : 'name';
+        $f_familyName = isset($fieldMap->familyName) ? $fieldMap->familyName : 'familyName';
+        $f_dateOfBirth = isset($fieldMap->dateOfBirth) ? $fieldMap->dateOfBirth : 'dateOfBirth';
+        $f_sex = isset($fieldMap->sex) ? $fieldMap->sex : 'sex';
+        $f_cityCode = isset($fieldMap->cityCode) ? $fieldMap->cityCode : 'cityCode';
 
         return (($partial && !property_exists($person, $f_name)) || $this->matchName($person->{$f_name})) &&
             (($partial && !property_exists($person, $f_familyName)) || $this->matchFamilyName($person->{$f_familyName})) &&
