@@ -110,9 +110,9 @@ class CodiceFiscale
      * @param object|array $person expected fields: name, familyName, dateOfBirth, sex, cityCode
      * @param object|array $fieldMap if provided, allow to remap field names
      * @param bool $partial validate only present fields
-     * @return bool
+     * @return false|array ok: null, error: array with names of fields that don't match
      */
-    public function match($person, $fieldMap = null, $partial = false)
+    public function validate($person, $fieldMap = null, $partial = false)
     {
         if (is_array($person)) {
             $person = (object) $person;
@@ -128,11 +128,29 @@ class CodiceFiscale
         $f_sex = isset($fieldMap->sex) ? $fieldMap->sex : 'sex';
         $f_cityCode = isset($fieldMap->cityCode) ? $fieldMap->cityCode : 'cityCode';
 
-        return (($partial && !property_exists($person, $f_name)) || $this->matchName($person->{$f_name})) &&
-            (($partial && !property_exists($person, $f_familyName)) || $this->matchFamilyName($person->{$f_familyName})) &&
-            (($partial && !property_exists($person, $f_dateOfBirth)) || $this->matchDateOfBirth($person->{$f_dateOfBirth})) &&
-            (($partial && !property_exists($person, $f_sex)) || $this->matchSex($person->{$f_sex})) &&
-            (($partial && !property_exists($person, $f_cityCode)) || $this->matchCityCode($person->{$f_cityCode}));
+        $errs = [];
+
+        if (!(($partial && !property_exists($person, $f_name)) || $this->matchName($person->{$f_name}))) {
+            $errs[] = 'name';
+        }
+        if (!(($partial && !property_exists($person, $f_familyName)) || $this->matchFamilyName($person->{$f_familyName}))) {
+            $errs[] = 'familyName';
+        }
+        if (!(($partial && !property_exists($person, $f_dateOfBirth)) || $this->matchDateOfBirth($person->{$f_dateOfBirth}))) {
+            $errs[] = 'dateOfBirth';
+        }
+        if (!(($partial && !property_exists($person, $f_sex)) || $this->matchSex($person->{$f_sex}))) {
+            $errs[] = 'sex';
+        }
+        if (!(($partial && !property_exists($person, $f_cityCode)) || $this->matchCityCode($person->{$f_cityCode}))) {
+            $errs[] = 'cityCode';
+        }
+
+        if (empty($errs)) {
+            return null;
+        }
+
+        return $errs;
     }
 
     /**

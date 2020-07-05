@@ -58,13 +58,12 @@ class CodFiscTest extends TestCase
             $this->assertTrue($c->matchDateOfBirth($dateOfBirth));
             $this->assertTrue($c->matchSex($sex));
 
-            $this->assertTrue($c->match((object) compact('name', 'familyName', 'dateOfBirth', 'cityCode', 'sex')));
-            $this->assertTrue($c->match($person,$fieldMap));
+            $this->assertTrue(null === $c->validate((object) compact('name', 'familyName', 'dateOfBirth', 'cityCode', 'sex')));
+            $this->assertTrue(null === $c->validate($person,$fieldMap));
 
             //partial validation
-            $this->assertTrue($c->match(compact('name',  'dateOfBirth', 'cityCode'),null,true));
-            $this->assertFalse($c->match(['name' => 'Mario', 'cityCode'=> 'Z000'],null,true));
-
+            $this->assertTrue(null === $c->validate(compact('name',  'dateOfBirth', 'cityCode'),null,true));
+            $this->assertTrue(null !== $c->validate(['name' => 'Mario', 'cityCode'=> 'Z000'],null,true));
 
             $this->assertTrue($c->getCityCode() === $cityCode);
             $this->assertTrue($c->getSex() === $sex);
