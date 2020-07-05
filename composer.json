@@ -1,0 +1,47 @@
+{
+    "name": "ivanomatteo/codicefiscale",
+    "description": "Calculation and data extraction on italian fiscal code (codice fiscale), with \"omocodie\" and diacritical character esapnsion (caratteri diacritici)",
+    "keywords": [
+        "ivanomatteo",
+        "codicefiscale",
+        "omocodia",
+        "diacritici"
+    ],
+    "homepage": "https://github.com/ivanomatteo/codicefiscale",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Ivano Matteo",
+            "email": "ivanomatteo@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.6"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^4.0",
+        "phpunit/phpunit": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "IvanoMatteo\\CodiceFiscale\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "IvanoMatteo\\CodiceFiscale\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+    }
+}
