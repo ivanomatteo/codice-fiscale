@@ -39,13 +39,13 @@ class CodiceFiscale
             $cod->codiceFiscale = strtoupper(trim($codfisc));
         }
         if (!static::strMatchFormat($cod->codiceFiscale)) {
-            throw new CodicefiscaleException('Formato Errato', CodicefiscaleException::FORMAT);
+            throw new CodicefiscaleException('invalid-format');
         }
         if (!static::isDateOfBirthCorrect($cod->codiceFiscale, $century)) {
-            throw new CodicefiscaleException('The date of birth is not coherent with the fiscal code', CodicefiscaleException::DATE_OF_BIRTH);
+            throw new CodicefiscaleException('dob-not-match');
         }
         if (!static::strMatchControlDigit($cod->codiceFiscale)) {
-            throw new CodicefiscaleException('Control digit does not match', CodicefiscaleException::CONTROL_DIGIT);
+            throw new CodicefiscaleException('cdigit-not-match');
         }
 
         return $cod;
@@ -304,7 +304,7 @@ class CodiceFiscale
     {
         if (isset($num)) {
             if ($num < 1 || $num > 127) {
-                throw new CodicefiscaleException('variation ' . $num . ' do not exists');
+                throw new CodicefiscaleException('variation-not-exists', compact('num'));
             }
         }
         $ind = array_reverse(static::$omocodieIndexes);
@@ -567,7 +567,7 @@ class CodiceFiscale
         }
 
         if ($dt === null) {
-            throw new CodicefiscaleException('impossibile convertire in data: ' . json_encode($date));
+            throw new CodicefiscaleException('date-parse-failed', compact('date'));
         }
 
         return $dt;
@@ -599,7 +599,7 @@ class CodiceFiscale
 
         $cityCode = strtoupper(trim($cityCode));
         if (!preg_match(static::$regex_city_code, $cityCode)) {
-            throw new CodicefiscaleException('wrong city code format');
+            throw new CodicefiscaleException('wrong-city-code-format');
         }
 
         $tmp = static::processFamilyName($familyName) . static::processName($name) . static::processDateOfBirth($dateOfBirth, $sex) . $cityCode;
@@ -648,7 +648,7 @@ class CodiceFiscale
     {
         $l = strlen($name);
         if ($l < 2) {
-            throw new CodicefiscaleException("the fields name and familyName must be at least 2 character long");
+            throw new CodicefiscaleException("name-or-familyname-too-short");
         }
 
         $result = '';
@@ -684,7 +684,7 @@ class CodiceFiscale
         if ($sex === 'F') {
             $day += 40;
         } else if ($sex !== 'M') {
-            throw new CodicefiscaleException("the sex field can be only M or F");
+            throw new CodicefiscaleException("sex-wrong-format");
         }
         return str_pad($year, 2, '0', STR_PAD_LEFT) . static::$monthMap[$month - 1] . str_pad($day, 2, '0', STR_PAD_LEFT);
     }
@@ -699,7 +699,7 @@ class CodiceFiscale
     private static function isVowel($c)
     {
         if (empty($c) || strlen($c) !== 1) {
-            throw new CodicefiscaleException("bad character format: " . $c);
+            throw new CodicefiscaleException("bad-character-format", ['character' => $c]);
         }
         return strpos(static::$vowels, $c) !== FALSE;
     }
@@ -715,7 +715,7 @@ class CodiceFiscale
 
         $l = strlen($cf);
         if ($l < 15) {
-            throw new CodicefiscaleException('the control digit is calculated on first 15 digits, the input is only ' . $l . ' digits');
+            throw new CodicefiscaleException('too-short-for-checkdigit', ['length' => $l]);
         }
 
         for ($i = 0; $i < 15; $i++) {
