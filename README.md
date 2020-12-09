@@ -1,4 +1,4 @@
-# codice ficale
+# codice fiscale
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/ivanomatteo/codice-fiscale.svg?style=flat-square)](https://packagist.org/packages/ivanomatteo/codice-fiscale)
 [![Total Downloads](https://img.shields.io/packagist/dt/ivanomatteo/codice-fiscale.svg?style=flat-square)](https://packagist.org/packages/ivanomatteo/codice-fiscale)
