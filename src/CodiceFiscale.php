@@ -387,7 +387,6 @@ class CodiceFiscale
         $year = (int) $d->year;
         $month = (int) $d->month;
         $day = (int) $d->day;
-        $max_days = 0;
 
         if (in_array($month, [11, 4, 6, 9])) {
             $max_days = 30;
@@ -504,6 +503,7 @@ class CodiceFiscale
         $currYear = (int) $currDateTime->format('Y');
         $century = static::century4digits($currYear);
 
+        $yy = (int)$yy;
         $before = ($century - 100) + $yy;
         $after = $century + $yy;
 
