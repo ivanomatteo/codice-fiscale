@@ -3,7 +3,6 @@
 namespace IvanoMatteo\CodiceFiscale;
 
 use DateTime;
-use stdClass;
 
 /**
  * Description of Codicefiscale
@@ -347,7 +346,7 @@ class CodiceFiscale
         $mm = (int) $arr->month;
         $yy = (int) $arr->year;
 
-        return static::calculateProbableDateOfBirth($dd, $mm, $yy, $minAge, $currDateTime);
+        return static::calculateProbableDateOfBirth($yy, $mm, $dd, $minAge, $currDateTime);
     }
 
 
