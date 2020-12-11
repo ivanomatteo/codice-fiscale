@@ -6,3 +6,4 @@ coverage
 env.php
 env.php_
 /.idea
+.phpunit.result.cache
