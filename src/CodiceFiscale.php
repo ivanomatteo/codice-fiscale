@@ -682,7 +682,7 @@ class CodiceFiscale
     }
 
     /**
-     * @param $string $name
+     * @param string $name
      * @return string
      * @throws CodicefiscaleException
      *
