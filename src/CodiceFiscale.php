@@ -800,8 +800,7 @@ class CodiceFiscale
             }
         }
 
-        $cc = static::$alphabet[$sum % 26];
-        return $cc;
+        return static::$alphabet[$sum % 26];
     }
 
     public static function init()
