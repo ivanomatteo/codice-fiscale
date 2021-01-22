@@ -462,6 +462,7 @@ class CodiceFiscale
         $month = $monthIndex + 1;
         $month = str_pad($month, 2, '0', STR_PAD_LEFT);
 
+        $day = str_pad($day, 2, '0', STR_PAD_LEFT);
 
         return (object) compact('year', 'month', 'day');
     }
